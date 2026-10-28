@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The Specivo ref whose published schemas (docs/import-bundle/v1) the shipped
+  # copies must match byte for byte.
+  # PINNED REF: the format docs reach core's main only with the 0.11.0 release.
+  # Until then this is the release branch; after the release it becomes the
+  # `v0.11.0` tag. Never a moving branch once a tag exists.
+  SPECIVO_CORE_REF: release/0.11.0
+  # A missing comparison fails instead of skipping.
+  SPECIVO_REQUIRE_CORE_SCHEMAS: "1"
+  SPECIVO_CORE_SCHEMAS: ${{ github.workspace }}/specivo-core/docs/import-bundle/v1
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check out the published schemas from Specivo
+        uses: actions/checkout@v7
+        with:
+          repository: specivo/specivo
+          ref: ${{ env.SPECIVO_CORE_REF }}
+          path: specivo-core
+          sparse-checkout: docs/import-bundle
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --locked --python ${{ matrix.python }}
+      - run: uv run pytest
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy --strict
+
+  lowest-dependencies:
+    # The oldest versions pyproject.toml allows must work too.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check out the published schemas from Specivo
+        uses: actions/checkout@v7
+        with:
+          repository: specivo/specivo
+          ref: ${{ env.SPECIVO_CORE_REF }}
+          path: specivo-core
+          sparse-checkout: docs/import-bundle
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+      - name: Pin every runtime dependency to its lower bound
+        run: |
+          python3 - > floors.txt <<'PY'
+          import tomllib
+          for dependency in tomllib.load(open("pyproject.toml", "rb"))["project"]["dependencies"]:
+              print(dependency.replace(">=", "=="))
+          PY
+          cat floors.txt
+      - run: uv venv --python 3.12 .venv-floors
+      - run: VIRTUAL_ENV=.venv-floors uv pip install -c floors.txt -e . "pytest>=8.3"
+      - run: .venv-floors/bin/python -m pytest

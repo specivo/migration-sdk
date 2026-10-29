@@ -216,9 +216,46 @@ class TestReferences:
         )
         assert validate_bundle(root).ok
 
-    def test_a_missing_parent_is_reported(self, tmp_path: Path) -> None:
-        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("child", parent_ref="parent")])
-        assert _codes(validate_bundle(root)) == [("issues.jsonl", 1, "unresolved_ref")]
+    def test_a_parent_outside_the_bundle_is_a_warning(self, tmp_path: Path) -> None:
+        """The parent may be in another bundle of the same source; only the load can tell."""
+        root = write_bundle(
+            tmp_path / "b",
+            projects=[project("p1")],
+            issues=[issue("child", parent_ref="a-7"), issue("other", parent_ref="a-8"), issue("third")],
+        )
+        report = validate_bundle(root)
+        assert report.ok, report.format_text()
+        (warning,) = report.warnings
+        assert (warning.file, warning.line, str(warning.code)) == ("issues.jsonl", None, "external_ref")
+        assert warning.message == (
+            "2 parent_ref(s) name no issue in this bundle, e.g. 'a-7' (line 1), 'a-8' (line 2); loading looks them "
+            "up in earlier imports of the same source and keeps any it cannot find in the links file until a later "
+            "import brings them"
+        )
+
+    def test_an_issue_cannot_be_its_own_parent(self, tmp_path: Path) -> None:
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1", parent_ref="i1")])
+        assert _codes(validate_bundle(root)) == [("issues.jsonl", None, "parent_cycle")]
+
+    def test_a_parent_cycle_across_projects_is_reported(self, tmp_path: Path) -> None:
+        root = write_bundle(
+            tmp_path / "b",
+            projects=[project("p1"), project("p2")],
+            issues=[issue("i1", "p1", parent_ref="i2"), issue("i2", "p2", parent_ref="i1")],
+        )
+        assert _codes(validate_bundle(root)) == [("issues.jsonl", None, "parent_cycle")]
+
+    def test_an_outside_ref_ending_in_a_newline_is_an_error(self, tmp_path: Path) -> None:
+        relation = {"source_ref": "r1", "from_ref": "i1", "to_ref": "a-7\n", "relation_type": "relates"}
+        root = write_bundle(
+            tmp_path / "b",
+            projects=[project("p1")],
+            issues=[issue("i1", parent_ref="a-8\n")],
+            relations=[relation],
+        )
+        report = validate_bundle(root)
+        assert sorted(_codes(report)) == [("issues.jsonl", 1, "schema"), ("relations.jsonl", 1, "schema")]
+        assert report.warnings == []
 
     def test_a_lookup_ref_is_checked(self, tmp_path: Path) -> None:
         root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1", status_ref="closed")])
@@ -440,6 +477,47 @@ class TestReferences:
         relation = {"source_ref": "r1", "from_ref": "i1", "to_ref": "i1", "relation_type": "relates"}
         root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1")], relations=[relation])
         assert _codes(validate_bundle(root)) == [("relations.jsonl", 1, "invalid_ref")]
+
+    def test_an_issue_outside_the_bundle_cannot_relate_to_itself_either(self, tmp_path: Path) -> None:
+        relation = {"source_ref": "r1", "from_ref": "a-7", "to_ref": "a-7", "relation_type": "relates"}
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1")], relations=[relation])
+        report = validate_bundle(root)
+        assert _codes(report) == [("relations.jsonl", 1, "invalid_ref")]
+        assert report.warnings == []
+
+    def test_one_end_of_a_relation_outside_the_bundle_is_a_warning(self, tmp_path: Path) -> None:
+        relations = [
+            {"source_ref": "r1", "from_ref": "i1", "to_ref": "a-7", "relation_type": "blocks"},
+            {"source_ref": "r2", "from_ref": "a-8", "to_ref": "i1", "relation_type": "relates"},
+        ]
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1")], relations=relations)
+        report = validate_bundle(root)
+        assert report.ok, report.format_text()
+        (warning,) = report.warnings
+        assert (warning.file, warning.line, str(warning.code)) == ("relations.jsonl", None, "external_ref")
+        assert warning.message == (
+            "2 relation end(s) name no issue in this bundle, e.g. 'a-7' (line 1), 'a-8' (line 2); loading looks them "
+            "up in earlier imports of the same source and keeps any relation it cannot make yet in the links file "
+            "until a later import brings the issue"
+        )
+
+    def test_a_relation_with_both_ends_outside_the_bundle_is_an_error(self, tmp_path: Path) -> None:
+        relation = {"source_ref": "r1", "from_ref": "a-7", "to_ref": "a-8", "relation_type": "relates"}
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1")], relations=[relation])
+        report = validate_bundle(root)
+        assert _codes(report) == [("relations.jsonl", 1, "invalid_ref")]
+        assert report.errors[0].message == (
+            "Neither from_ref 'a-7' nor to_ref 'a-8' names an issue in this bundle: a bundle carries only relations "
+            "that touch its own issues"
+        )
+        assert report.warnings == []
+
+    def test_a_relation_end_must_still_be_a_well_formed_ref(self, tmp_path: Path) -> None:
+        relation = {"source_ref": "r1", "from_ref": "i1", "to_ref": "", "relation_type": "relates"}
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1")], relations=[relation])
+        report = validate_bundle(root)
+        assert set(_codes(report)) == {("relations.jsonl", 1, "schema")}
+        assert report.warnings == []
 
     def test_wiki_revisions_must_be_oldest_first(self, tmp_path: Path) -> None:
         page = {

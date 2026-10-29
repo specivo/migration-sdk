@@ -103,6 +103,11 @@ A few things worth knowing:
   placeholder must name a record in the bundle. A placeholder whose record is never imported
   becomes plain text, its label or else its ref, so give issue placeholders a label where the
   bare ref would mean nothing to a reader.
+- **Links between parts.** The same goes for an issue's `parent_ref` and for one end of a
+  `Relation`: either may name an issue of another bundle of the same source, an `external_ref`
+  warning. Specivo makes the link once both issues are imported, whichever bundle is loaded
+  first, and keeps it waiting until then. Write a relation between two parts into both bundles
+  if that is simpler: it is made once. A relation with neither end in the bundle is an error.
 - **Attachments**: store the bytes first, then add the record with the hash it returns. The bytes
   can be `bytes`, a path, an open file or an iterable of chunks (a streamed download):
 

@@ -15,7 +15,7 @@ env:
   # PINNED REF: the format docs reach core's main only with the 0.11.0 release.
   # Until then this is the release branch; after the release it becomes the
   # `v0.11.0` tag. Never a moving branch once a tag exists.
-  SPECIVO_CORE_REF: release/0.11.0
+  SPECIVO_CORE_REF: v0.11.0
   # A missing comparison fails instead of skipping.
   SPECIVO_REQUIRE_CORE_SCHEMAS: "1"
   SPECIVO_CORE_SCHEMAS: ${{ github.workspace }}/specivo-core/docs/import-bundle/v1

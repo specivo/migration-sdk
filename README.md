@@ -35,13 +35,13 @@ each [GitHub Release](https://github.com/specivo/migration-sdk/releases). Pin a 
 
 ```bash
 # as a dependency of your importer
-uv add "specivo-migration-sdk @ git+https://github.com/specivo/migration-sdk@v0.1.0"
+uv add "specivo-migration-sdk @ git+https://github.com/specivo/migration-sdk@v0.2.0"
 # or in pyproject.toml:
-#   dependencies = ["specivo-migration-sdk @ git+https://github.com/specivo/migration-sdk@v0.1.0"]
+#   dependencies = ["specivo-migration-sdk @ git+https://github.com/specivo/migration-sdk@v0.2.0"]
 
 # only the specivo-bundle command
-uv tool install git+https://github.com/specivo/migration-sdk@v0.1.0
-# or: pipx install git+https://github.com/specivo/migration-sdk@v0.1.0
+uv tool install git+https://github.com/specivo/migration-sdk@v0.2.0
+# or: pipx install git+https://github.com/specivo/migration-sdk@v0.2.0
 ```
 
 ## Writing a bundle

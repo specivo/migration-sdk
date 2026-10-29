@@ -270,12 +270,22 @@ class Issue(Record):
 
 @dataclass(kw_only=True, slots=True)
 class JournalDetail(Record):
-    """One field change in a journal entry."""
+    """One field change in a journal entry.
+
+    A change of an attribute that names a record (``status_id``,
+    ``fixed_version_id``, …, see :data:`~specivo_migration_sdk.format.REFERENCE_ATTRIBUTES`)
+    gives the records' ``source_ref`` as ``old_ref`` / ``new_ref``, never the
+    source's ids as values; ``old_value`` / ``new_value`` are then the source's
+    text for them (a version's name, an issue's key), which Specivo shows when a
+    ref names nothing that was imported.
+    """
 
     property: DetailProperty
     prop_key: str
     old_value: str | None = None
     new_value: str | None = None
+    old_ref: str | None = None
+    new_ref: str | None = None
 
 
 @dataclass(kw_only=True, slots=True)

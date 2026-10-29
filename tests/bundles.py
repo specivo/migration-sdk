@@ -271,7 +271,7 @@ def write_full(target: Path) -> Path:
                 user_ref="u2",
                 notes=f"Reproduced, {placeholders.user('u1')}. Log: {placeholders.attachment_link('a2', 'log')}",
                 created_at="2024-02-02T10:00:00Z",
-                details=[JournalDetail(property="attr", prop_key="status_id", old_value="open", new_value="doing")],
+                details=[JournalDetail(property="attr", prop_key="status_id", old_ref="open", new_ref="doing")],
             )
         )
         writer.add(Relation(source_ref="r1", from_ref="i1", to_ref="i2", relation_type="blocks"))

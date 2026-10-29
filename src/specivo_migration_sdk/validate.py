@@ -60,6 +60,7 @@ from specivo_migration_sdk.format import (
     PROJECTS,
     PUBLIC_ACCESS,
     RECORD_FILES,
+    REFERENCE_ATTRIBUTES,
     RELATIONS,
     SECRET_PROPERTIES,
     SHA256_RE,
@@ -793,6 +794,25 @@ class _Scanner:
             if detail["property"] == "attr" and detail["prop_key"] == "description":
                 self._text(JOURNALS.name, line, "details.old_value", detail.get("old_value"))
                 self._text(JOURNALS.name, line, "details.new_value", detail.get("new_value"))
+            self._check_detail_refs(line, detail)
+
+    def _check_detail_refs(self, line: int, detail: dict[str, Any]) -> None:
+        """Refs belong only to a change of an attribute that names a record.
+
+        They are not looked up in the bundle: history may name a record the
+        source no longer has, and Specivo shows the detail's text for it.
+        """
+        if detail.get("old_ref") is None and detail.get("new_ref") is None:
+            return
+        if detail["property"] == "attr" and detail["prop_key"] in REFERENCE_ATTRIBUTES:
+            return
+        self.report.error(
+            ProblemCode.INVALID_REF,
+            JOURNALS.name,
+            f"details: old_ref and new_ref are only for a change of {', '.join(REFERENCE_ATTRIBUTES)}, "
+            f"not {detail['property']} {detail['prop_key']!r}",
+            line=line,
+        )
 
     def _check_relations(self, line: int, record: dict[str, Any]) -> None:
         """Check a relation; one end may be an issue of another bundle, not both.

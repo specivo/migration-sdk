@@ -954,3 +954,31 @@ class TestReviewedGaps:
         report = validate_bundle(root)
         assert _codes(report) == [("journals.jsonl", 1, "unresolved_ref")]
         assert report.problems[0].message.startswith("details.new_value {{user:…}}: no user")
+
+    def test_history_refs_need_not_name_a_record_in_the_bundle(self, tmp_path: Path) -> None:
+        """History may name a deleted version; Specivo shows the detail's text for it."""
+        journal = {
+            "source_ref": "j1",
+            "issue_ref": "i1",
+            "details": [
+                {"property": "attr", "prop_key": "fixed_version_id", "old_ref": "gone", "old_value": "1.0"},
+                {"property": "attr", "prop_key": "parent_id", "new_ref": "elsewhere"},
+            ],
+        }
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1")], journals=[journal])
+        assert validate_bundle(root).problems == []
+
+    def test_history_refs_only_on_attributes_that_name_a_record(self, tmp_path: Path) -> None:
+        journal = {
+            "source_ref": "j1",
+            "issue_ref": "i1",
+            "details": [
+                {"property": "attr", "prop_key": "subject", "new_ref": "x"},
+                {"property": "cf", "prop_key": "cf1", "old_ref": "x"},
+                {"property": "attr", "prop_key": "status_id", "new_ref": "x"},
+            ],
+        }
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1")], journals=[journal])
+        report = validate_bundle(root)
+        assert _codes(report) == [("journals.jsonl", 1, "invalid_ref"), ("journals.jsonl", 1, "invalid_ref")]
+        assert "not attr 'subject'" in report.problems[0].message

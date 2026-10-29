@@ -55,6 +55,22 @@ class EntityType(StrEnum):
     TIME_ENTRY = "time_entry"
 
 
+# Issue attributes whose history values name a record, and the entity type of
+# that record: a journal detail changing one of them gives the records as
+# ``old_ref`` / ``new_ref``, with the source's text for them in
+# ``old_value`` / ``new_value``.
+REFERENCE_ATTRIBUTES: dict[str, EntityType] = {
+    "project_id": EntityType.PROJECT,
+    "tracker_id": EntityType.TRACKER,
+    "status_id": EntityType.STATUS,
+    "priority_id": EntityType.PRIORITY,
+    "assigned_to_id": EntityType.USER,
+    "category_id": EntityType.CATEGORY,
+    "fixed_version_id": EntityType.VERSION,
+    "parent_id": EntityType.ISSUE,
+}
+
+
 @dataclass(frozen=True, slots=True)
 class RecordFile:
     """One JSON-lines file of the bundle.

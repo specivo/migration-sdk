@@ -278,6 +278,13 @@ class JournalDetail(Record):
     source's ids as values; ``old_value`` / ``new_value`` are then the source's
     text for them (a version's name, an issue's key), which Specivo shows when a
     ref names nothing that was imported.
+
+    A ``cf`` change's ``prop_key`` is the custom field's ``source_ref``. A
+    field whose ``field_format`` is ``user`` or ``version`` (see
+    :data:`~specivo_migration_sdk.format.REFERENCE_FIELD_FORMATS`) names its
+    values by ref the same way, one value a side: a ``multiple`` field's change
+    is a detail per value removed (``old_ref`` only) and per value added
+    (``new_ref`` only).
     """
 
     property: DetailProperty

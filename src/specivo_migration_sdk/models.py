@@ -285,6 +285,12 @@ class JournalDetail(Record):
     values by ref the same way, one value a side: a ``multiple`` field's change
     is a detail per value removed (``old_ref`` only) and per value added
     (``new_ref`` only).
+
+    An ``attachment`` change is a file added (its name as ``new_value``) or
+    removed (its name as ``old_value``); its ``prop_key`` is the attachment's
+    ``source_ref``. Specivo names the file as it imported it when that
+    attachment is in a bundle, and by the name in the value otherwise (a file
+    deleted since), so give the name either way.
     """
 
     property: DetailProperty

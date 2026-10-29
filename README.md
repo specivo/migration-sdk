@@ -109,6 +109,10 @@ A few things worth knowing:
   `version` (`REFERENCE_FIELD_FORMATS`) is written the same way, one value a side: a `multiple`
   field's change is a detail per value removed (`old_ref` only) and per value added (`new_ref`
   only). A ref on any other detail is an error.
+- **Custom fields** are shown by their `name`, in any script, as the source shows it (the issue
+  page, history, search filters, the REST API and MCP); the `key` is only where values are stored.
+  A `user` or `version` field's values are shown by the name of the person or version they name,
+  to a reader who may see them.
 - **Sprints and tags.** A `Sprint` belongs to one project and holds issues of that project only
   (an issue's `sprint_ref`; a sprint of another project is an error). Give it the status it had
   (`planned`, `active`, `completed`) and, for a completed one, `completed_at`. Specivo has one

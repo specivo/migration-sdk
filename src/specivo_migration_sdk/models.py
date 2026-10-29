@@ -235,6 +235,8 @@ class Sprint(Record):
 
 @dataclass(kw_only=True, slots=True)
 class CustomField(Record):
+    """An issue custom field. Specivo shows it by ``name``; ``key`` is where its values are stored."""
+
     source_ref: str
     name: str
     key: str

@@ -18,7 +18,9 @@ Build them with :func:`issue`, :func:`user`, :func:`attachment`,
 :func:`wiki`, or :func:`attachment_image` and :func:`attachment_link` for the
 usual Markdown around an attachment. Only those four kinds are placeholders;
 any other ``{{...}}`` is ordinary text. Text inside fenced code blocks is never
-expanded, so a code sample can show a placeholder literally.
+expanded, so a code sample can show a placeholder literally. Fences pair the
+way CommonMark pairs them (see :func:`_fenced_blocks`); inline code spans are
+not code here.
 """
 
 from __future__ import annotations
@@ -57,8 +59,9 @@ LABELLED_KINDS = frozenset({PlaceholderKind.ISSUE, PlaceholderKind.WIKI})
 # the bar, so the grammar needs no escaping.
 PLACEHOLDER_RE = re.compile(r"\{\{(issue|user|attachment|wiki):([^\s{}|]+)(?:\|([^{}\n]*))?\}\}")
 
-# Splits text on fenced code blocks, keeping the fences.
-_FENCE_RE = re.compile(r"(```.*?```|~~~.*?~~~)", re.DOTALL)
+# A line that may open or close a fenced code block: up to three spaces, a run
+# of three or more backticks or tildes, then the rest of the line.
+_FENCE_LINE_RE = re.compile(r" {0,3}(`{3,}|~{3,})(.*)")
 
 # Markdown that would end an image's alt text or a link's text early.
 _MARKDOWN_TEXT_RE = re.compile(r"([\\\[\]])")
@@ -81,15 +84,49 @@ class Placeholder:
         return f"{{{{{self.kind}:{self.ref}{label}}}}}"
 
 
+def _fenced_blocks(text: str) -> Iterator[tuple[int, int]]:
+    """Yield the ``(start, end)`` offsets of each fenced code block in *text*.
+
+    Fences pair as in CommonMark: a fence is a whole line of three or more
+    backticks or tildes, indented by at most three spaces (a backtick fence's
+    info string holds no backtick). The block ends at a line of the same
+    character, at least as long, with nothing after it but spaces and tabs,
+    or else at the end of the text. A block starts at the beginning of its
+    opening line and ends after its closing line.
+    """
+    opening = ""
+    block_start = offset = 0
+    for line in text.split("\n"):
+        line_end = offset + len(line)
+        match = _FENCE_LINE_RE.fullmatch(line.rstrip("\r"))
+        if match is not None:
+            run, rest = match.groups()
+            if not opening:
+                if not (run[0] == "`" and "`" in rest):
+                    opening, block_start = run, offset
+            elif run[0] == opening[0] and len(run) >= len(opening) and not rest.strip(" \t"):
+                yield block_start, line_end
+                opening = ""
+        offset = line_end + 1
+    if opening:
+        yield block_start, len(text)
+
+
+def _outside_code(text: str) -> Iterator[tuple[int, int]]:
+    """Yield the ``(start, end)`` offsets of each stretch of *text* outside fenced code blocks."""
+    position = 0
+    for start, end in _fenced_blocks(text):
+        yield position, start
+        position = end
+    yield position, len(text)
+
+
 def find_placeholders(text: str | None) -> Iterator[Placeholder]:
     """Yield every placeholder in *text*, outside fenced code blocks."""
     if not text or "{{" not in text:
         return
-    for index, part in enumerate(_FENCE_RE.split(text)):
-        # Odd positions are the fenced blocks themselves.
-        if index % 2:
-            continue
-        for match in PLACEHOLDER_RE.finditer(part):
+    for start, end in _outside_code(text):
+        for match in PLACEHOLDER_RE.finditer(text, start, end):
             label = match.group(3)
             yield Placeholder(PlaceholderKind(match.group(1)), match.group(2), label if label else None)
 

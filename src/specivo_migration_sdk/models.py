@@ -258,6 +258,7 @@ class Issue(Record):
     start_date: DateValue | None = None
     due_date: DateValue | None = None
     estimated_hours: DecimalValue | None = None
+    remaining_estimate: DecimalValue | None = None
     done_ratio: int = 0
     is_private: bool = False
     custom_values: list[CustomValue] = field(default_factory=list)

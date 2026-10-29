@@ -242,6 +242,7 @@ def write_full(target: Path) -> Path:
                 fixed_version_ref="v1",
                 start_date="2024-02-01",
                 estimated_hours=Decimal("2.5"),
+                remaining_estimate=Decimal("1"),
                 done_ratio=30,
                 custom_values=[
                     CustomValue(field_ref="cf1", key="severity", value="High"),

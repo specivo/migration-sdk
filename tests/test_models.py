@@ -138,6 +138,7 @@ CASES: list[tuple[Record, dict[str, Any]]] = [
             subject="Login fails",
             due_date="2024-04-01",
             estimated_hours=Decimal("1.333333"),
+            remaining_estimate=Decimal("0.5"),
             done_ratio=50,
             is_private=True,
             custom_values=[
@@ -155,6 +156,7 @@ CASES: list[tuple[Record, dict[str, Any]]] = [
             "subject": "Login fails",
             "due_date": "2024-04-01",
             "estimated_hours": "1.333333",
+            "remaining_estimate": "0.5",
             "done_ratio": 50,
             "is_private": True,
             "custom_values": [

@@ -145,6 +145,22 @@ class TestRecords:
         assert _codes(report) == [("issues.jsonl", 2, "schema")]
         assert report.problems[0].message.startswith("/created_at:")
 
+    @pytest.mark.parametrize("value", ["3.25", 3.25, "0", 0])
+    def test_a_remaining_estimate_is_accepted(self, tmp_path: Path, value: object) -> None:
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1", remaining_estimate=value)])
+        report = validate_bundle(root)
+        assert report.ok, report.format_text()
+
+    @pytest.mark.parametrize("field", ["estimated_hours", "remaining_estimate"])
+    @pytest.mark.parametrize("value", ["-1", -0.5, "1e3", "", "1.2.3"])
+    def test_an_estimate_is_a_non_negative_decimal(self, tmp_path: Path, field: str, value: object) -> None:
+        record = issue("i1")
+        record[field] = value
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[record])
+        report = validate_bundle(root)
+        assert _codes(report) == [("issues.jsonl", 1, "schema")]
+        assert report.problems[0].message.startswith(f"/{field}:")
+
     def test_a_timestamp_without_an_offset_is_rejected(self, tmp_path: Path) -> None:
         root = write_bundle(tmp_path / "b", users=[user("u1", created_at="2024-02-01T10:00:00")])
         assert _codes(validate_bundle(root)) == [("users.jsonl", 1, "schema")]

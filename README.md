@@ -99,7 +99,7 @@ A few things worth knowing:
   it. Specivo keeps no history for the remaining estimate, so write no journal detail for it.
 - **History names records by ref.** A journal detail changing an attribute that names a record
   (`project_id`, `tracker_id`, `status_id`, `priority_id`, `assigned_to_id`, `category_id`,
-  `fixed_version_id`, `parent_id`; `REFERENCE_ATTRIBUTES` in `specivo_migration_sdk.format`) gives
+  `fixed_version_id`, `sprint_id`, `parent_id`; `REFERENCE_ATTRIBUTES` in `specivo_migration_sdk.format`) gives
   the records' refs as `old_ref` / `new_ref`, never the source's ids as values: Specivo would read
   those as ids of its own. Put the source's text for the value (a version's name, an issue's key)
   in `old_value` / `new_value` where there is one. Specivo stores the Specivo id of the record a
@@ -109,6 +109,12 @@ A few things worth knowing:
   `version` (`REFERENCE_FIELD_FORMATS`) is written the same way, one value a side: a `multiple`
   field's change is a detail per value removed (`old_ref` only) and per value added (`new_ref`
   only). A ref on any other detail is an error.
+- **Sprints and tags.** A `Sprint` belongs to one project and holds issues of that project only
+  (an issue's `sprint_ref`; a sprint of another project is an error). Give it the status it had
+  (`planned`, `active`, `completed`) and, for a completed one, `completed_at`. Specivo has one
+  active sprint per project and imports a second one as planned. A source whose sprints span
+  projects writes a sprint per project. An issue's `tags` are names, 1 to 64 characters, created
+  in its project as needed; Specivo keeps no history of them.
 - **Text is Markdown.** Refer to other records with placeholders, which Specivo turns into links
   and mentions once it knows what they are called: `placeholders.issue(ref)`,
   `placeholders.user(ref)`, `placeholders.wiki(ref, "text")`, and for attachments

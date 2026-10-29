@@ -39,6 +39,7 @@ from specivo_migration_sdk import (
     PublicAccess,
     Relation,
     Role,
+    Sprint,
     Status,
     TimeEntry,
     Tracker,
@@ -213,6 +214,17 @@ def write_full(target: Path) -> Path:
         writer.add(Version(source_ref="v1", project_ref="p1", name="1.0", effective_date=date(2024, 6, 30)))
         writer.add(Category(source_ref="c1", project_ref="p1", name="Frontend", assigned_to_ref="u1"))
         writer.add(
+            Sprint(
+                source_ref="s1",
+                project_ref="p1",
+                name="Sprint 1",
+                goal="Fix sign-in",
+                status="active",
+                start_date="2024-01-29",
+                end_date=date(2024, 2, 12),
+            )
+        )
+        writer.add(
             CustomField(
                 source_ref="cf1",
                 name="Severity",
@@ -240,6 +252,7 @@ def write_full(target: Path) -> Path:
                 description=f"Steps are in {placeholders.attachment_image('a1', 'the screenshot')}.",
                 category_ref="c1",
                 fixed_version_ref="v1",
+                sprint_ref="s1",
                 start_date="2024-02-01",
                 estimated_hours=Decimal("2.5"),
                 remaining_estimate=Decimal("1"),
@@ -248,6 +261,7 @@ def write_full(target: Path) -> Path:
                     CustomValue(field_ref="cf1", key="severity", value="High"),
                     CustomValue(field_ref="cf2", key="reviewer", value="u2", value_kind="user_ref"),
                 ],
+                tags=["login", "regression"],
                 created_at=datetime(2024, 2, 1, 10, 0, tzinfo=UTC),
                 extra={"source_key": "10001"},
             )
@@ -271,7 +285,10 @@ def write_full(target: Path) -> Path:
                 user_ref="u2",
                 notes=f"Reproduced, {placeholders.user('u1')}. Log: {placeholders.attachment_link('a2', 'log')}",
                 created_at="2024-02-02T10:00:00Z",
-                details=[JournalDetail(property="attr", prop_key="status_id", old_ref="open", new_ref="doing")],
+                details=[
+                    JournalDetail(property="attr", prop_key="status_id", old_ref="open", new_ref="doing"),
+                    JournalDetail(property="attr", prop_key="sprint_id", new_ref="s1", new_value="Sprint 1"),
+                ],
             )
         )
         writer.add(Relation(source_ref="r1", from_ref="i1", to_ref="i2", relation_type="blocks"))

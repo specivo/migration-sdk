@@ -28,6 +28,7 @@ from specivo_migration_sdk import (
     Record,
     Relation,
     Role,
+    Sprint,
     Status,
     TimeEntry,
     Tracker,
@@ -123,6 +124,24 @@ CASES: list[tuple[Record, dict[str, Any]]] = [
     (
         Category(source_ref="c1", project_ref="p1", name="UI", assigned_to_ref="u1"),
         {"source_ref": "c1", "project_ref": "p1", "name": "UI", "assigned_to_ref": "u1"},
+    ),
+    (
+        Sprint(
+            source_ref="s1",
+            project_ref="p1",
+            name="Sprint 1",
+            status="completed",
+            start_date="2024-01-29",
+            completed_at="2024-02-12T11:00:00+07:00",
+        ),
+        {
+            "source_ref": "s1",
+            "project_ref": "p1",
+            "name": "Sprint 1",
+            "status": "completed",
+            "start_date": "2024-01-29",
+            "completed_at": "2024-02-12T11:00:00+07:00",
+        },
     ),
     (
         CustomField(source_ref="cf1", name="Reviewer", key="reviewer", field_format="user", multiple=True),

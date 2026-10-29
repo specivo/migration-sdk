@@ -65,6 +65,7 @@ from specivo_migration_sdk.format import (
     RELATIONS,
     SECRET_PROPERTIES,
     SHA256_RE,
+    SPRINTS,
     TIME_ENTRIES,
     VERSIONS,
     WATCHERS,
@@ -319,6 +320,7 @@ class _Scanner:
         self.page_project: dict[str, str] = {}
         self.page_parents: dict[str, dict[str, str | None]] = {}
         self.custom_field_keys: dict[str, str] = {}
+        self.sprint_project: dict[str, str] = {}
         self.custom_field_formats: dict[str, str] = {}
         self.redirects: set[tuple[str, str]] = set()
         self.watchers: set[tuple[str, str, str]] = set()
@@ -709,6 +711,9 @@ class _Scanner:
         self._scoped(CATEGORIES, line, record)
         self._ref(CATEGORIES.name, line, "assigned_to_ref", EntityType.USER, record.get("assigned_to_ref"))
 
+    def _check_sprints(self, line: int, record: dict[str, Any]) -> None:
+        self.sprint_project.setdefault(record["source_ref"], self._scoped(SPRINTS, line, record))
+
     def _check_custom_fields(self, line: int, record: dict[str, Any]) -> None:
         key = record["key"]
         if key in self.custom_field_keys.values():
@@ -737,6 +742,7 @@ class _Scanner:
         self._ref(name, line, "parent_ref", EntityType.ISSUE, record.get("parent_ref"), outside=OUTSIDE_PARENT)
         self._ref(name, line, "category_ref", EntityType.CATEGORY, record.get("category_ref"))
         self._ref(name, line, "fixed_version_ref", EntityType.VERSION, record.get("fixed_version_ref"))
+        self._check_sprint_ref(line, project_ref, record.get("sprint_ref"))
 
         assignee: str | None = record.get("assigned_to_ref")
         if (
@@ -757,6 +763,21 @@ class _Scanner:
         for value in record.get("custom_values") or []:
             self._check_custom_value(line, value)
         self._text(name, line, "description", record.get("description"))
+
+    def _check_sprint_ref(self, line: int, project_ref: str, sprint_ref: str | None) -> None:
+        """An issue's sprint must be a sprint of the bundle, and of the issue's own project."""
+        if sprint_ref is None:
+            return
+        self._ref(ISSUES.name, line, "sprint_ref", EntityType.SPRINT, sprint_ref)
+        sprint_project = self.sprint_project.get(sprint_ref)
+        if sprint_project is not None and sprint_project != project_ref:
+            self.report.error(
+                ProblemCode.INVALID_REF,
+                ISSUES.name,
+                f"sprint_ref: sprint {sprint_ref!r} belongs to project {sprint_project!r}, not to the issue's "
+                f"project {project_ref!r}; a sprint holds issues of its own project only",
+                line=line,
+            )
 
     def _check_custom_value(self, line: int, value: dict[str, Any]) -> None:
         name = ISSUES.name

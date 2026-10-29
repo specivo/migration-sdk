@@ -27,6 +27,7 @@ type ProjectModule = Literal["issue_tracking", "wiki", "time_tracking"]
 type PrincipalKind = Literal["user", "group"]
 type VersionStatus = Literal["open", "locked", "closed"]
 type VersionSharing = Literal["none", "descendants", "hierarchy", "tree", "system"]
+type SprintStatus = Literal["planned", "active", "completed"]
 type ValueKind = Literal["scalar", "user_ref", "version_ref"]
 type DetailProperty = Literal["attr", "cf", "attachment", "relation"]
 type RelationType = Literal["relates", "duplicates", "blocks", "precedes", "copied_to"]
@@ -213,6 +214,26 @@ class Category(Record):
 
 
 @dataclass(kw_only=True, slots=True)
+class Sprint(Record):
+    """A time-boxed iteration of a project. It holds issues of that project only.
+
+    ``completed_at`` is when a completed sprint was completed.
+    """
+
+    source_ref: str
+    project_ref: str
+    name: str
+    goal: str | None = None
+    status: SprintStatus = "planned"
+    start_date: DateValue | None = None
+    end_date: DateValue | None = None
+    completed_at: Timestamp | None = None
+    created_at: Timestamp | None = None
+    updated_at: Timestamp | None = None
+    extra: dict[str, Any] | None = None
+
+
+@dataclass(kw_only=True, slots=True)
 class CustomField(Record):
     source_ref: str
     name: str
@@ -255,6 +276,8 @@ class Issue(Record):
     parent_ref: str | None = None
     category_ref: str | None = None
     fixed_version_ref: str | None = None
+    # A sprint of the issue's own project.
+    sprint_ref: str | None = None
     start_date: DateValue | None = None
     due_date: DateValue | None = None
     estimated_hours: DecimalValue | None = None
@@ -262,6 +285,8 @@ class Issue(Record):
     done_ratio: int = 0
     is_private: bool = False
     custom_values: list[CustomValue] = field(default_factory=list)
+    # Tag names (1 to 64 characters), created in the issue's project as needed.
+    tags: list[str] = field(default_factory=list)
     created_at: Timestamp | None = None
     updated_at: Timestamp | None = None
     closed_at: Timestamp | None = None
@@ -437,6 +462,7 @@ type LineRecord = (
     | Membership
     | Version
     | Category
+    | Sprint
     | CustomField
     | Issue
     | Journal

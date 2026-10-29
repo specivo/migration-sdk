@@ -45,6 +45,7 @@ class EntityType(StrEnum):
     MEMBERSHIP = "membership"
     VERSION = "version"
     CATEGORY = "category"
+    SPRINT = "sprint"
     CUSTOM_FIELD = "custom_field"
     ISSUE = "issue"
     JOURNAL = "journal"
@@ -67,6 +68,7 @@ REFERENCE_ATTRIBUTES: dict[str, EntityType] = {
     "assigned_to_id": EntityType.USER,
     "category_id": EntityType.CATEGORY,
     "fixed_version_id": EntityType.VERSION,
+    "sprint_id": EntityType.SPRINT,
     "parent_id": EntityType.ISSUE,
 }
 
@@ -109,6 +111,7 @@ PROJECTS = RecordFile("projects.jsonl", models.Project, EntityType.PROJECT)
 MEMBERSHIPS = RecordFile("memberships.jsonl", models.Membership, EntityType.MEMBERSHIP)
 VERSIONS = RecordFile("versions.jsonl", models.Version, EntityType.VERSION)
 CATEGORIES = RecordFile("categories.jsonl", models.Category, EntityType.CATEGORY)
+SPRINTS = RecordFile("sprints.jsonl", models.Sprint, EntityType.SPRINT)
 CUSTOM_FIELDS = RecordFile("custom_fields.jsonl", models.CustomField, EntityType.CUSTOM_FIELD)
 ISSUES = RecordFile("issues.jsonl", models.Issue, EntityType.ISSUE)
 JOURNALS = RecordFile("journals.jsonl", models.Journal, EntityType.JOURNAL)
@@ -129,6 +132,7 @@ RECORD_FILES: tuple[RecordFile, ...] = (
     MEMBERSHIPS,
     VERSIONS,
     CATEGORIES,
+    SPRINTS,
     CUSTOM_FIELDS,
     ISSUES,
     JOURNALS,

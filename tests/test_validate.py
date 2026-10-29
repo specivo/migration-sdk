@@ -467,6 +467,47 @@ class TestReferences:
         )
         assert _codes(validate_bundle(root)) == [("issues.jsonl", 1, "unresolved_ref")]
 
+    def test_an_issue_in_a_sprint_of_its_project(self, tmp_path: Path) -> None:
+        sprint = {"source_ref": "s1", "project_ref": "p1", "name": "Sprint 1", "status": "active"}
+        root = write_bundle(
+            tmp_path / "b",
+            projects=[project("p1")],
+            sprints=[sprint],
+            issues=[issue("i1", sprint_ref="s1", tags=["login"])],
+        )
+        assert validate_bundle(root).problems == []
+
+    def test_an_issue_naming_no_sprint_of_the_bundle(self, tmp_path: Path) -> None:
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1", sprint_ref="s9")])
+        assert _codes(validate_bundle(root)) == [("issues.jsonl", 1, "unresolved_ref")]
+
+    def test_an_issue_cannot_sit_in_another_projects_sprint(self, tmp_path: Path) -> None:
+        sprint = {"source_ref": "s2", "project_ref": "p2", "name": "Sprint 2"}
+        root = write_bundle(
+            tmp_path / "b",
+            projects=[project("p1"), project("p2")],
+            sprints=[sprint],
+            issues=[issue("i1", sprint_ref="s2")],
+        )
+        assert _codes(validate_bundle(root)) == [("issues.jsonl", 1, "invalid_ref")]
+
+    @pytest.mark.parametrize("tag", ["", "   ", "x" * 65])
+    def test_a_tag_is_one_to_64_characters_with_some_text(self, tmp_path: Path, tag: str) -> None:
+        root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1", tags=[tag])])
+        assert set(_codes(validate_bundle(root))) == {("issues.jsonl", 1, "schema")}
+
+    def test_sprint_history_names_sprints_by_ref(self, tmp_path: Path) -> None:
+        journal = {
+            "source_ref": "j1",
+            "issue_ref": "i1",
+            "details": [{"property": "attr", "prop_key": "sprint_id", "old_ref": "gone", "new_ref": "s1"}],
+        }
+        sprint = {"source_ref": "s1", "project_ref": "p1", "name": "Sprint 1"}
+        root = write_bundle(
+            tmp_path / "b", projects=[project("p1")], sprints=[sprint], issues=[issue("i1")], journals=[journal]
+        )
+        assert validate_bundle(root).problems == []
+
     def test_a_version_ref_custom_value_must_be_a_string(self, tmp_path: Path) -> None:
         field = {"source_ref": "cf1", "name": "Found in", "key": "found_in", "field_format": "version"}
         value = {"field_ref": "cf1", "key": "found_in", "value": [7], "value_kind": "version_ref"}

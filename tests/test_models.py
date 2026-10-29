@@ -172,14 +172,18 @@ CASES: list[tuple[Record, dict[str, Any]]] = [
             issue_ref="i1",
             notes="Done.",
             created_at=WHEN,
-            details=[JournalDetail(property="attr", prop_key="status_id", old_value="10", new_value="11")],
+            details=[
+                JournalDetail(property="attr", prop_key="status_id", old_ref="10", new_ref="11", new_value="Done")
+            ],
         ),
         {
             "source_ref": "j1",
             "issue_ref": "i1",
             "notes": "Done.",
             "created_at": "2024-03-01T09:30:00+07:00",
-            "details": [{"property": "attr", "prop_key": "status_id", "old_value": "10", "new_value": "11"}],
+            "details": [
+                {"property": "attr", "prop_key": "status_id", "new_value": "Done", "old_ref": "10", "new_ref": "11"}
+            ],
         },
     ),
     (

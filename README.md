@@ -67,7 +67,7 @@ with BundleWriter("export", source_system="sample", source_instance="tracker.exa
     bundle.add(Journal(source_ref="c1", issue_ref="10001", user_ref="u2", created_at="2024-02-02T10:00:00+07:00",
                        notes=f"Reproduced, {placeholders.user('u1')}. Working on it.",
                        details=[JournalDetail(property="attr", prop_key="status_id",
-                                              old_value="open", new_value="doing")]))
+                                              old_ref="open", new_ref="doing")]))
 print(validate_bundle("export").format_text())
 ```
 
@@ -97,6 +97,15 @@ A few things worth knowing:
   `estimated_hours` is the estimate Specivo shows and sums (for a source with an original and a
   remaining estimate, the original); `remaining_estimate` is the time left as the source tracked
   it. Specivo keeps no history for the remaining estimate, so write no journal detail for it.
+- **History names records by ref.** A journal detail changing an attribute that names a record
+  (`project_id`, `tracker_id`, `status_id`, `priority_id`, `assigned_to_id`, `category_id`,
+  `fixed_version_id`, `parent_id`; `REFERENCE_ATTRIBUTES` in `specivo_migration_sdk.format`) gives
+  the records' refs as `old_ref` / `new_ref`, never the source's ids as values: Specivo would read
+  those as ids of its own. Put the source's text for the value (a version's name, an issue's key)
+  in `old_value` / `new_value` where there is one. Specivo stores the Specivo id of the record a
+  ref names, and the text when the record was not imported (history often names a version or a
+  status the source has since deleted), so `validate_bundle()` does not require such a ref to
+  name a record in the bundle. A ref on any other detail is an error.
 - **Text is Markdown.** Refer to other records with placeholders, which Specivo turns into links
   and mentions once it knows what they are called: `placeholders.issue(ref)`,
   `placeholders.user(ref)`, `placeholders.wiki(ref, "text")`, and for attachments

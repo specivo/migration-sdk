@@ -1011,7 +1011,7 @@ class TestReviewedGaps:
 
     def test_history_refs_on_a_user_or_version_custom_field(self, tmp_path: Path) -> None:
         """A ref may name a record no bundle holds, as for an attribute; a scalar field takes none."""
-        fields = [
+        fields: list[dict[str, Any]] = [
             {"source_ref": "cf1", "name": "Reviewer", "key": "reviewer", "field_format": "user"},
             {"source_ref": "cf2", "name": "Found in", "key": "found_in", "field_format": "version", "multiple": True},
             {"source_ref": "cf3", "name": "Severity", "key": "severity", "field_format": "list"},

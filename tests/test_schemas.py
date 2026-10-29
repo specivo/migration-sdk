@@ -34,7 +34,8 @@ _VALUE_REFS = {
     "date": DateValue,
     "optionalDate": DateValue,
     "decimal": DecimalValue,
-    "optionalDecimal": DecimalValue,
+    "nonNegativeDecimal": DecimalValue,
+    "optionalNonNegativeDecimal": DecimalValue,
 }
 
 

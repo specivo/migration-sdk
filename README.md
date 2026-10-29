@@ -93,6 +93,10 @@ A few things worth knowing:
 - **Timestamps** need a UTC offset. Give a `datetime` with a zone, or a string such as
   `2024-02-01T10:00:00.000+0700`; `timestamp(value, assume_tz=...)` converts what a source gives,
   including epoch seconds or milliseconds, and refuses to guess a missing offset.
+- **Estimates are hours**, zero or more, given as a `Decimal`, a number or a string of digits.
+  `estimated_hours` is the estimate Specivo shows and sums (for a source with an original and a
+  remaining estimate, the original); `remaining_estimate` is the time left as the source tracked
+  it. Specivo keeps no history for the remaining estimate, so write no journal detail for it.
 - **Text is Markdown.** Refer to other records with placeholders, which Specivo turns into links
   and mentions once it knows what they are called: `placeholders.issue(ref)`,
   `placeholders.user(ref)`, `placeholders.wiki(ref, "text")`, and for attachments

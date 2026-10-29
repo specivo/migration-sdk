@@ -968,6 +968,31 @@ class TestReviewedGaps:
         root = write_bundle(tmp_path / "b", projects=[project("p1")], issues=[issue("i1")], journals=[journal])
         assert validate_bundle(root).problems == []
 
+    def test_history_refs_on_a_user_or_version_custom_field(self, tmp_path: Path) -> None:
+        """A ref may name a record no bundle holds, as for an attribute; a scalar field takes none."""
+        fields = [
+            {"source_ref": "cf1", "name": "Reviewer", "key": "reviewer", "field_format": "user"},
+            {"source_ref": "cf2", "name": "Found in", "key": "found_in", "field_format": "version", "multiple": True},
+            {"source_ref": "cf3", "name": "Severity", "key": "severity", "field_format": "list"},
+        ]
+        journal = {
+            "source_ref": "j1",
+            "issue_ref": "i1",
+            "details": [
+                {"property": "cf", "prop_key": "cf1", "old_ref": "gone", "old_value": "Former colleague"},
+                {"property": "cf", "prop_key": "cf2", "new_ref": "v9"},
+                {"property": "cf", "prop_key": "cf3", "new_ref": "x"},
+                {"property": "cf", "prop_key": "undefined", "new_ref": "x"},
+            ],
+        }
+        root = write_bundle(
+            tmp_path / "b", projects=[project("p1")], custom_fields=fields, issues=[issue("i1")], journals=[journal]
+        )
+        report = validate_bundle(root)
+        assert _codes(report) == [("journals.jsonl", 1, "invalid_ref"), ("journals.jsonl", 1, "invalid_ref")]
+        assert "not cf 'cf3'" in report.problems[0].message
+        assert "not cf 'undefined'" in report.problems[1].message
+
     def test_history_refs_only_on_attributes_that_name_a_record(self, tmp_path: Path) -> None:
         journal = {
             "source_ref": "j1",

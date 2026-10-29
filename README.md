@@ -105,7 +105,10 @@ A few things worth knowing:
   in `old_value` / `new_value` where there is one. Specivo stores the Specivo id of the record a
   ref names, and the text when the record was not imported (history often names a version or a
   status the source has since deleted), so `validate_bundle()` does not require such a ref to
-  name a record in the bundle. A ref on any other detail is an error.
+  name a record in the bundle. A change of a custom field whose `field_format` is `user` or
+  `version` (`REFERENCE_FIELD_FORMATS`) is written the same way, one value a side: a `multiple`
+  field's change is a detail per value removed (`old_ref` only) and per value added (`new_ref`
+  only). A ref on any other detail is an error.
 - **Text is Markdown.** Refer to other records with placeholders, which Specivo turns into links
   and mentions once it knows what they are called: `placeholders.issue(ref)`,
   `placeholders.user(ref)`, `placeholders.wiki(ref, "text")`, and for attachments

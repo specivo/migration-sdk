@@ -70,6 +70,15 @@ REFERENCE_ATTRIBUTES: dict[str, EntityType] = {
     "parent_id": EntityType.ISSUE,
 }
 
+# Custom field formats whose values name a record, and the entity type of that
+# record. A change of such a field carries refs as an attribute's does, one value
+# a side: a ``multiple`` field's change is a detail per value removed (only
+# ``old_ref``) or added (only ``new_ref``).
+REFERENCE_FIELD_FORMATS: dict[str, EntityType] = {
+    "user": EntityType.USER,
+    "version": EntityType.VERSION,
+}
+
 
 @dataclass(frozen=True, slots=True)
 class RecordFile:

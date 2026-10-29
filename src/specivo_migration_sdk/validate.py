@@ -61,6 +61,7 @@ from specivo_migration_sdk.format import (
     PUBLIC_ACCESS,
     RECORD_FILES,
     REFERENCE_ATTRIBUTES,
+    REFERENCE_FIELD_FORMATS,
     RELATIONS,
     SECRET_PROPERTIES,
     SHA256_RE,
@@ -318,6 +319,7 @@ class _Scanner:
         self.page_project: dict[str, str] = {}
         self.page_parents: dict[str, dict[str, str | None]] = {}
         self.custom_field_keys: dict[str, str] = {}
+        self.custom_field_formats: dict[str, str] = {}
         self.redirects: set[tuple[str, str]] = set()
         self.watchers: set[tuple[str, str, str]] = set()
         self.stored_files: dict[str, int | None] = {}
@@ -717,6 +719,7 @@ class _Scanner:
                 line=line,
             )
         self.custom_field_keys.setdefault(record["source_ref"], key)
+        self.custom_field_formats.setdefault(record["source_ref"], record["field_format"])
         for ref in record.get("tracker_refs") or []:
             self._ref(CUSTOM_FIELDS.name, line, "tracker_refs", EntityType.TRACKER, ref)
         for ref in record.get("project_refs") or []:
@@ -797,7 +800,7 @@ class _Scanner:
             self._check_detail_refs(line, detail)
 
     def _check_detail_refs(self, line: int, detail: dict[str, Any]) -> None:
-        """Refs belong only to a change of an attribute that names a record.
+        """Refs belong only to a change of an attribute, or a custom field, that names a record.
 
         They are not looked up in the bundle: history may name a record the
         source no longer has, and Specivo shows the detail's text for it.
@@ -806,10 +809,13 @@ class _Scanner:
             return
         if detail["property"] == "attr" and detail["prop_key"] in REFERENCE_ATTRIBUTES:
             return
+        if detail["property"] == "cf" and self.custom_field_formats.get(detail["prop_key"]) in REFERENCE_FIELD_FORMATS:
+            return
         self.report.error(
             ProblemCode.INVALID_REF,
             JOURNALS.name,
-            f"details: old_ref and new_ref are only for a change of {', '.join(REFERENCE_ATTRIBUTES)}, "
+            f"details: old_ref and new_ref are only for a change of {', '.join(REFERENCE_ATTRIBUTES)} "
+            f"or of a custom field of the bundle with field_format {' or '.join(REFERENCE_FIELD_FORMATS)}, "
             f"not {detail['property']} {detail['prop_key']!r}",
             line=line,
         )
